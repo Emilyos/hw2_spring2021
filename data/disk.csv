@@ -1,5 +1,5 @@
-id,manufacture,speed,freesize,costbybyte
-1,apple,13,50,12
-2,samsung,13,50,10
-3,sandisk,20,51,10
-4,toshiba,20,40,10
+id,manufacture,speed,freesize,totalSize,costbybyte
+1,apple,13,50,50,12
+2,samsung,13,50,50,10
+3,sandisk,20,51,51,10
+4,toshiba,20,40,40,10
