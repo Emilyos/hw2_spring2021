@@ -344,28 +344,80 @@ def isCompanyExclusive(diskID: int) -> bool:
 
 
 def getConflictingDisks() -> List[int]:
+    try:
+        sql_query = sql.SQL("SELECT diskid "
+                            "FROM runson "
+                            "WHERE queryid IN ("
+                            "   SELECT queryid"
+                            "   FROM ("
+                            "       SELECT count(queryid) as n_of_disks, queryid"
+                            "       FROM runson"
+                            "       GROUP BY queryid"
+                            "       ORDER BY n_of_disks DESC, queryid"
+                            "       ) AS t"
+                            "   WHERE n_of_disks > 1) "
+                            "ORDER BY diskid")
+        rows, results = executeAndCommit(sql_query)
+        return [results[i]['diskid'] for i in range(results.size())]
+    except Exception:
+        pass
     return []
 
 
 def mostAvailableDisks() -> List[int]:
+    try:
+        sql_query = sql.SQL(f"SELECT count(disk.id) as n_query, disk.speed, disk.id, disk.manufacture"
+                            f" FROM disk LEFT JOIN query"
+                            f"      ON query.size <= disk.freesize"
+                            f" GROUP BY disk.id, disk.speed"
+                            f" ORDER BY n_query DESC, disk.speed DESC, disk.id ASC"
+                            f" LIMIT 5"
+                            )
+        rows, results = executeAndCommit(sql_query)
+        return [results[i]['id'] for i in range(results.size())]
+    except Exception:
+        pass
     return []
 
 
 def getCloseQueries(queryID: int) -> List[int]:
+    try:
+        sql_query = sql.SQL(f"SELECT queryid "
+                            f"FROM ( "
+                            f"         SELECT count(queryid) as n_of_disks, queryid "
+                            f"         FROM runson "
+                            f"         WHERE diskid in ( "
+                            f"             SELECT diskid "
+                            f"             FROM runson "
+                            f"             WHERE queryid = {queryID} "
+                            f"         ) "
+                            f"           and queryid != {queryID} "
+                            f"         GROUP BY queryid "
+                            f"     ) as t "
+                            f"WHERE t.n_of_disks >= (SELECT count(diskid) FROM runson where queryid = {queryID})*0.5 "
+                            f"ORDER BY queryid ASC "
+                            f"LIMIT 10"
+                            )
+        rows, results = executeAndCommit(sql_query)
+        return [results[i]['queryid'] for i in range(results.size())]
+    except Exception:
+        pass
     return []
 
 
 # dropTables()
 # createTables()
-query = Query(queryID=1, purpose='stam', size=10)
+query = Query(queryID=4, purpose='stam', size=10)
 # addQuery(query)
 # deleteQuery(query)
 # print(getQueryProfile(2))
 # deleteQuery(query)
-disk = Disk(1, 'apple', 1, 2, 3)
-print(addQueryToDisk(query, disk.getDiskID()))
+disk = Disk(4, 'apple', 1, 2, 3)
+# print(addQueryToDisk(query, disk.getDiskID()))
 # addDisk(disk)
 # print(getDiskProfile(disk.getDiskID()))
 ram = RAM(10, 'aaaaaa', 100)
 # addRAM(ram)
 # print(addDiskAndQuery(disk, query))
+# print(mostAvailableDisks())
+print(getCloseQueries(1))
